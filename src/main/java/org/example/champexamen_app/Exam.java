@@ -25,21 +25,20 @@ public class Exam {
         this.submittedAnswers.clear();
     }
 
-    public Question getQuestion(int i){
+    public Question getQuestion(int i) {
         return this.questions.get(i);
     }
 
-    public String getSubmittedAnswers(int i){
+    public String getSubmittedAnswer(int i) {
         return this.submittedAnswers.get(i);
     }
 
-
     public void printAllQuestions(){
-        for (int key : questions.keySet()){
+        for(int key : questions.keySet()){
             System.out.println(this.questions.get(key));
         }
-    }
 
+    }
 
     public HashMap<Integer, Question> getQuestions() {
         return questions;
@@ -59,8 +58,6 @@ public class Exam {
         this.submittedAnswers.putAll(submittedAnswers);
     }
 
-
-
     public Exam(LinkedList<Question> questionList){
         this.questions = new HashMap<>();
         this.submittedAnswers = new HashMap<>();
@@ -69,7 +66,6 @@ public class Exam {
             this.questions.put(i, questions); i++;
         }
 
+
     }
-
-
 }
