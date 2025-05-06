@@ -36,6 +36,7 @@ public class HelloApplication extends Application {
         root.getChildren().add(hBoxGrade);
 
 
+
         Scene scene = new Scene( root ,320, 240);
         stage.setTitle("ChampExamen (R) application (C) ");
         stage.setScene(scene);
