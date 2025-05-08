@@ -84,7 +84,7 @@ public class HelloApplication extends Application {
 
     public VBox buildTrueFalseQ(int questionNumber, TFQuestion tfQuestion1){
         Label labelQuestionText = new Label(tfQuestion1.getQuestionText());
-        RadioButton radioButtonTrue = new RadioButton("True");
+        RadioButton radioButtonTrue = new RadioButton("True ");
         RadioButton radioButtonFalse = new RadioButton("False");
         HBox hBox = new HBox(10, radioButtonTrue, radioButtonFalse);
         VBox vBox = new VBox(labelQuestionText, hBox);
