@@ -1,6 +1,8 @@
 package org.example.champexamen_app;
 
 import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -18,6 +20,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 
 public class HelloApplication extends Application {
+    private Exam myExam;
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -28,7 +31,7 @@ public class HelloApplication extends Application {
 
         int[] indxes = {11, 0, 5};
         LinkedList<Question> exam = myBank.selectRandomQuestion(indxes);
-        Exam myExam = new Exam(exam);
+        myExam = new Exam(exam);
         myExam.printAllQuestions();
 
         VBox root = new VBox();
@@ -37,16 +40,19 @@ public class HelloApplication extends Application {
         MenuBar menuBarMain = buildMenuBar();
         root.getChildren().add(menuBarMain);
 
-
         HBox hboxGrade = new HBox();
         hboxGrade.setAlignment(Pos.CENTER);
         hboxGrade.getChildren().add(new Label("Grade:"));
+
+        VBox[] vboxQuestions = buildQuesitonsVboxes();
 
 
         HBox hBoxBanner = buildBanner();
         root.getChildren().add(hBoxBanner);
 
         root.getChildren().add(hboxGrade);
+        root.getChildren().add(new Separator());
+        root.getChildren().addAll(vboxQuestions);
         root.getChildren().add(new Separator());
 
         HBox hBoxButtons = buildFooter();
@@ -61,9 +67,48 @@ public class HelloApplication extends Application {
         stage.show();
     }
 
+    private VBox[] buildQuesitonsVboxes() {
+        int numberOfQuestionsInExam = myExam.questions.size();
+        VBox[] vBoxes = new VBox[numberOfQuestionsInExam];
+
+        for (int i = 0; i<numberOfQuestionsInExam; i++){
+            Question question = myExam.getQuestion(i+1);
+            if (question.getQuestionType()==QuestionType.TFQ){
+                vBoxes[i] = buildTrueFalseQ(1, (TFQuestion) question);
+            } else { // it is MCQ
+                vBoxes[i] = buildMCQ(2, (MCQuestion) question);
+            }
+        }
+        return vBoxes;
+    }
+
+    public VBox buildTrueFalseQ(int questionNumber, TFQuestion tfQuestion1){
+        Label labelQuestionText = new Label(tfQuestion1.getQuestionText());
+        RadioButton radioButtonTrue = new RadioButton("True");
+        RadioButton radioButtonFalse = new RadioButton("False");
+        HBox hBox = new HBox(10, radioButtonTrue, radioButtonFalse);
+        VBox vBox = new VBox(labelQuestionText, hBox);
+        return vBox;
+    }
+
+    public VBox buildMCQ(int questionNumber, MCQuestion mcqQuestion){
+        Label labelQuestionText = new Label(mcqQuestion.getQuestionText());
+        VBox vBox = new VBox(labelQuestionText);
+
+        LinkedList<String> options = mcqQuestion.getOptions();
+        ToggleGroup toggleGroup = new ToggleGroup();
+        for (String s : options){
+            RadioButton radioButton = new RadioButton(s);
+            radioButton.setToggleGroup(toggleGroup);
+            vBox.getChildren().add(radioButton);
+        }
+        return vBox;
+    }
+
     private HBox buildBanner() {
         Image logoObj = new Image("/logo.png");
         ImageView imageViewLogo = new ImageView(logoObj);
+
         imageViewLogo.setPreserveRatio(true);
         imageViewLogo.setFitHeight(100);
         Image bannerObj = new Image("/banner.png");
@@ -76,12 +121,24 @@ public class HelloApplication extends Application {
     }
 
     private HBox buildFooter() {
-        HBox hboxFooter = new HBox();
+        HBox hboxFooter = new HBox(10);
         Button buttonClear = new Button("Clear");
-        Button ButtonSave = new Button("Save");
+        Button buttonSave = new Button("Save");
         Button buttonSubmit = new Button("Submit");
-        hboxFooter.getChildren().addAll(buttonClear, ButtonSave, buttonSubmit);
+
+        // register to actions
+        buttonClear.setOnAction(e -> clearExamAnswers());
+        buttonSave.setOnAction(e -> saveExamAnswers());
+        buttonSubmit.setOnAction(new SubmitEventHandler());
+
+        hboxFooter.getChildren().addAll(buttonClear, buttonSave, buttonSubmit);
         return hboxFooter;
+    }
+
+    private void saveExamAnswers() {
+    }
+
+    private void clearExamAnswers() {
     }
 
     private MenuBar buildMenuBar() {
@@ -97,5 +154,15 @@ public class HelloApplication extends Application {
 
     public static void main(String[] args) {
         launch();
+
+    }
+    public static class SubmitEventHandler implements EventHandler<ActionEvent> {
+
+
+        @Override
+        public void handle(ActionEvent actionEvent) {
+            System.out.println("Submit button clicked");
+        }
     }
 }
+
