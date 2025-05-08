@@ -36,7 +36,6 @@ public class HelloApplication extends Application {
 
         VBox root = new VBox();
 
-
         MenuBar menuBarMain = buildMenuBar();
         root.getChildren().add(menuBarMain);
 
