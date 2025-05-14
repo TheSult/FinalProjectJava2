@@ -63,7 +63,9 @@ public class Exam {
         this.submittedAnswers = new HashMap<>();
         int i = 1;
         for (Question questions : questionList) {
-            this.questions.put(i, questions); i++;
+            this.questions.put(i, questions);
+            this.submittedAnswers.put(i, ""); // important initialize tbe submittedAnswers hashmap
+            i++;
         }
 
 

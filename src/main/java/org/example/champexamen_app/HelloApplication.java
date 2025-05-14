@@ -29,7 +29,7 @@ public class HelloApplication extends Application {
         myBank.readTFQ("src/main/resources/tfq.txt");
 
 
-        int[] indxes = {11, 0, 5};
+        int[] indxes = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
         LinkedList<Question> exam = myBank.selectRandomQuestion(indxes);
         myExam = new Exam(exam);
         myExam.printAllQuestions();
@@ -41,18 +41,26 @@ public class HelloApplication extends Application {
 
         HBox hboxGrade = new HBox();
         hboxGrade.setAlignment(Pos.CENTER);
-        hboxGrade.getChildren().add(new Label("Grade:"));
+        hboxGrade.getChildren().add(new Label("Grade: " ));
 
-        VBox[] vboxQuestions = buildQuesitonsVboxes();
+        VBox[] vboxQuestions = buildQuestionsVboxes();
 
 
         HBox hBoxBanner = buildBanner();
         root.getChildren().add(hBoxBanner);
 
         root.getChildren().add(hboxGrade);
-        root.getChildren().add(new Separator());
+
+
+
         root.getChildren().addAll(vboxQuestions);
         root.getChildren().add(new Separator());
+
+        VBox vBoxAllQuestions = new VBox(10);
+        vBoxAllQuestions.getChildren().addAll(vboxQuestions);
+        ScrollPane scrollPaneForQuestions = new ScrollPane(vBoxAllQuestions);
+        scrollPaneForQuestions.setFitToWidth(true); // or any needed config
+        root.getChildren().add(scrollPaneForQuestions);
 
         HBox hBoxButtons = buildFooter();
         hBoxButtons.setAlignment(Pos.CENTER);
@@ -66,41 +74,62 @@ public class HelloApplication extends Application {
         stage.show();
     }
 
-    private VBox[] buildQuesitonsVboxes() {
+    private VBox[] buildQuestionsVboxes() {
         int numberOfQuestionsInExam = myExam.questions.size();
         VBox[] vBoxes = new VBox[numberOfQuestionsInExam];
 
-        for (int i = 0; i<numberOfQuestionsInExam; i++){
-            Question question = myExam.getQuestion(i+1);
-            if (question.getQuestionType()==QuestionType.TFQ){
-                vBoxes[i] = buildTrueFalseQ(1, (TFQuestion) question);
+        for (int i = 0; i<numberOfQuestionsInExam; i++) {
+            int qNumber = i+1;
+            Question question = myExam.getQuestion(qNumber);
+            if (question.getQuestionType() == QuestionType.TFQ) {
+                vBoxes[i] = buildTrueFalseQ(qNumber, (TFQuestion) question);
             } else { // it is MCQ
-                vBoxes[i] = buildMCQ(2, (MCQuestion) question);
+                vBoxes[i] = buildMCQ(qNumber, (MCQuestion) question);
             }
         }
         return vBoxes;
     }
 
     public VBox buildTrueFalseQ(int questionNumber, TFQuestion tfQuestion1){
-        Label labelQuestionText = new Label(tfQuestion1.getQuestionText());
+        String qText = String.format("Q%d. %s", questionNumber, tfQuestion1.getQuestionText().trim());
+        Label labelQuestionText = new Label(qText);
         RadioButton radioButtonTrue = new RadioButton("True ");
         RadioButton radioButtonFalse = new RadioButton("False");
+        ToggleGroup toggleGroup = new ToggleGroup();
+        radioButtonTrue.setToggleGroup(toggleGroup);
+        radioButtonFalse.setToggleGroup(toggleGroup);
+        // handle radio button click
+        radioButtonTrue.setOnAction(e -> recordAnswer(questionNumber, "T"));
+        radioButtonFalse.setOnAction(e -> recordAnswer(questionNumber, "F"));
+
         HBox hBox = new HBox(10, radioButtonTrue, radioButtonFalse);
         VBox vBox = new VBox(labelQuestionText, hBox);
+        vBox.getChildren().add(new Separator());
         return vBox;
     }
 
+    private void recordAnswer(int n, String t) {
+        this.myExam.getSubmittedAnswers().put(n, t);
+        System.out.println(n + " -> " + this.myExam.getSubmittedAnswers().get(n));
+    }
+
     public VBox buildMCQ(int questionNumber, MCQuestion mcqQuestion){
-        Label labelQuestionText = new Label(mcqQuestion.getQuestionText());
+        String qText = String.format("Q%d. %s", questionNumber, mcqQuestion.getQuestionText().trim());
+        Label labelQuestionText = new Label(qText);
         VBox vBox = new VBox(labelQuestionText);
 
         LinkedList<String> options = mcqQuestion.getOptions();
         ToggleGroup toggleGroup = new ToggleGroup();
-        for (String s : options){
+        String[] optionLetters = {"A", "B", "C", "D", "E", "F", "G"};
+        for (int i=0; i<options.size(); i++){
+            String s = options.get(i);
             RadioButton radioButton = new RadioButton(s);
             radioButton.setToggleGroup(toggleGroup);
             vBox.getChildren().add(radioButton);
+            int finalI = i;
+            radioButton.setOnAction(e -> recordAnswer(questionNumber, optionLetters[finalI]));
         }
+
         return vBox;
     }
 
@@ -128,7 +157,7 @@ public class HelloApplication extends Application {
         // register to actions
         buttonClear.setOnAction(e -> clearExamAnswers());
         buttonSave.setOnAction(e -> saveExamAnswers());
-        buttonSubmit.setOnAction(new SubmitEventHandler());
+        buttonSubmit.setOnAction(new SubmitEventHandler(this.myExam));
 
         hboxFooter.getChildren().addAll(buttonClear, buttonSave, buttonSubmit);
         return hboxFooter;
@@ -138,6 +167,10 @@ public class HelloApplication extends Application {
     }
 
     private void clearExamAnswers() {
+//        for (ToggleGroup group : toggleGroup) {
+//            group.selectToggle(null);
+//        }
+//        myExam.clear();
     }
 
     private MenuBar buildMenuBar() {
@@ -157,10 +190,26 @@ public class HelloApplication extends Application {
     }
     public static class SubmitEventHandler implements EventHandler<ActionEvent> {
 
+        private Exam examObj;
+        public SubmitEventHandler(Exam myExam) {
+            this.examObj = myExam;
+        }
 
         @Override
         public void handle(ActionEvent actionEvent) {
             System.out.println("Submit button clicked");
+            int numberOfQuestions = this.examObj.getQuestions().size();
+            int grade = 0;
+            for (int i=1; i<=numberOfQuestions; i++){
+                Question question = this.examObj.getQuestion(i);
+                String correctAnswer = question.getCorrectAnswer();
+                String submittedAnswer = this.examObj.getSubmittedAnswer(i);
+                System.out.println(correctAnswer + " : " + submittedAnswer);
+                if (correctAnswer.equals(submittedAnswer)){
+                    grade = grade + 1;
+                }
+            }
+            System.out.println("Your grade is : " + grade);
         }
     }
 }
